@@ -1,8 +1,9 @@
 import express from "express";
 import { Kafka, logLevel } from "kafkajs";
-import { randomUUID } from 'crypto';
+import { randomUUID } from "crypto";
 import { OrderCreatedEvent } from "@common/events/order.events";
 import { InventoryReservedEvent } from "@common/events/inventory.events";
+import { PaymentFailedEvent } from "@common/events/payment.events";
 import db from "./db";
 
 const app = express();
@@ -57,30 +58,55 @@ app.post("/orders", async (req, res) => {
 const runConsumer = async () => {
   await consumer.connect();
   await consumer.subscribe({ topic: "inventory", fromBeginning: true });
+  await consumer.subscribe({ topic: "payments", fromBeginning: true });
 
-  console.log(
-    "Order service consumer is running and listening for inventory events..."
-  );
+  console.log("Order service consumer is running...");
 
   await consumer.run({
-    eachMessage: async ({ message }) => {
+    eachMessage: async ({ topic, message }) => {
       if (!message.value) return;
 
-      const inventoryEvent = JSON.parse(
-        message.value.toString()
-      ) as InventoryReservedEvent;
-      const { orderId } = inventoryEvent;
+      const eventType = message.headers?.["event-type"]?.toString();
+      const orderId = message.key!.toString();
 
-      console.log(`Received InventoryReservedEvent for order ${orderId}`);
+      if (topic === "inventory") {
+        if (eventType === "InventoryReserved") {
+          console.log(`Received InventoryReservedEvent for order ${orderId}`);
 
-      await db.query("UPDATE orders SET status = $1 WHERE order_id = $2", [
-        "CONFIRMED",
-        orderId,
-      ]);
-      console.log(
-        `Updated order ${orderId} status to CONFIRMED in the database.`
-      );
-      console.log(`🎉 Saga finished successfully for order ${orderId}!`);
+          await db.query("UPDATE orders SET status = $1 WHERE order_id = $2", [
+            "CONFIRMED",
+            orderId,
+          ]);
+
+          console.log(
+            `Updated order ${orderId} status to CONFIRMED in the database.`
+          );
+          console.log(`🎉 Saga finished successfully for order ${orderId}!`);
+        } else if (eventType === "InventoryOutOfStock") {
+          console.log(`Received PaymentFailedEvent for order ${orderId}`);
+          await db.query("UPDATE orders SET status = $1 WHERE order_id = $2", [
+            "FAILED",
+            orderId,
+          ]);
+          console.log(`❌ Order ${orderId} status updated to FAILED.`);
+        }
+      }
+
+      if (topic === "payments") {
+        if (eventType === "PaymentFailed") {
+          const paymentFailedEvent = JSON.parse(
+            message.value.toString()
+          ) as PaymentFailedEvent;
+          const { orderId } = paymentFailedEvent;
+
+          console.log(`Received PaymentFailedEvent for order ${orderId}`);
+          await db.query("UPDATE orders SET status = $1 WHERE order_id = $2", [
+            "FAILED",
+            orderId,
+          ]);
+          console.log(`Order ${orderId} status updated to FAILED.`);
+        }
+      }
     },
   });
 };
