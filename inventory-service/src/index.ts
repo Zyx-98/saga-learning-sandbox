@@ -45,7 +45,9 @@ const run = async () => {
             return; // Skip processing this event
           }
 
-          console.log(`Received OrderCreatedEvent for order ${orderEvent.orderId}`);
+          console.log(
+            `Received OrderCreatedEvent for order ${orderEvent.orderId}`
+          );
           orderDataCache.set(orderEvent.orderId, orderEvent);
           return;
         }

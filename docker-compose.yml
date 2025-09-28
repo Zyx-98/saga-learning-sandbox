@@ -80,6 +80,7 @@ services:
       - zookeeper
     ports:
       - "9092:9092"
+      - "5556:5556"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
@@ -88,6 +89,10 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_OPTS: "-javaagent:/usr/app/jmx_prometheus_javaagent.jar=5556:/usr/app/jmx-kafka.yml"
+    volumes:
+      - ./jmx-exporter/jmx_prometheus_javaagent.jar:/usr/app/jmx_prometheus_javaagent.jar
+      - ./jmx-exporter/jmx-kafka.yml:/usr/app/jmx-kafka.yml
     networks:
       - app-network
   kafka-init:
@@ -116,9 +121,41 @@ services:
                 bootstrap.servers: "kafka:29092"
     networks:
       - app-network
+  
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    networks:
+      - app-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+    networks:
+      - app-network
 
 volumes:
   postgres_data:
+  prometheus_data:
+  grafana_data:
 
 networks:
   app-network:
