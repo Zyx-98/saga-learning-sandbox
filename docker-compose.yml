@@ -1,4 +1,54 @@
 services:
+  order-service:
+    container_name: order_service
+    build:
+      context: ./order-service
+      target: development
+    volumes:
+      - ./order-service:/app
+      - /app/node_modules
+    ports:
+      - 3000:3000
+    environment:
+      - NODE_ENV=development
+    networks:
+      - app-network
+    depends_on:
+      - kafka-init
+      - postgres
+
+  inventory-service:
+    container_name: inventory_service
+    build:
+      context: ./inventory-service
+      target: development
+    volumes:
+      - ./inventory-service:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    networks:
+      - app-network
+    depends_on:
+      - kafka-init
+      - postgres
+
+  payment-service:
+    container_name: payment_service
+    build:
+      context: ./payment-service
+      target: development
+    volumes:
+      - ./payment-service:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    networks:
+      - app-network
+    depends_on:
+      - kafka-init
+      - postgres
+
   postgres:
     image: postgres:14-alpine
     container_name: postgres_db
@@ -40,6 +90,15 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
     networks:
       - app-network
+  kafka-init:
+    image: confluentinc/cp-kafka:7.3.2
+    depends_on:
+      - kafka
+    networks:
+      - app-network
+    volumes:
+      - ./create-kafka-topics.sh:/create-kafka-topics.sh
+    entrypoint: ["/bin/bash", "/create-kafka-topics.sh"]
 
   akhq:
     image: tchiotludo/akhq:latest

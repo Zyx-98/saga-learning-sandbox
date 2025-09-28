@@ -27,6 +27,14 @@ docker exec kafka kafka-topics \
   --partitions 3 \
   --replication-factor 1
 
+echo "Creating Kafka topic: inventory DLQ (dead-letter queue)"
+docker exec kafka kafka-topics \
+  --bootstrap-server kafka:29092 \
+  --create \
+  --topic inventory.dlq \
+  --partitions 3 \
+  --replication-factor 1
+
 echo "Kafka topics created successfully."
 
 # List all topics to verify creation

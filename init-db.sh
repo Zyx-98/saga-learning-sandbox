@@ -14,7 +14,7 @@ EOSQL
 # Connect to the 'orders_db' and create the 'orders' table.
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "orders_db" <<-EOSQL
     CREATE TABLE orders (
-        order_id UUID PRIMARY KEY,
+        id UUID PRIMARY KEY,
         customer_id VARCHAR(255) NOT NULL,
         product_id VARCHAR(255),
         quantity INT NOT NULL,
@@ -26,11 +26,11 @@ EOSQL
 # Connect to the 'inventory_db', create the 'products' table, and add sample data.
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "inventory_db" <<-EOSQL
     CREATE TABLE products (
-        product_id VARCHAR(255) PRIMARY KEY,
+        id VARCHAR(255) PRIMARY KEY,
         quantity INT NOT NULL
     );
 
-    INSERT INTO products (product_id, quantity) VALUES ('product-123', 100);
+    INSERT INTO products (id, quantity) VALUES ('product-123', 100);
 EOSQL
 
 echo "Databases and tables created successfully."

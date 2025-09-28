@@ -1,14 +1,14 @@
 import { Kafka, logLevel } from "kafkajs";
-import { OrderCreatedEvent } from "@common/events/order.events";
+import { OrderCreatedEvent } from "./common/events/order.events";
 import {
   PaymentFailedEvent,
   PaymentSucceededEvent,
-} from "@common/events/payment.events";
-import { InventoryOutOfStockEvent } from "@common/events/inventory.events";
+} from "./common/events/payment.events";
+import { InventoryOutOfStockEvent } from "./common/events/inventory.events";
 
 const kafka = new Kafka({
   clientId: "payment-service",
-  brokers: ["localhost:9092"],
+  brokers: ["kafka:29092"],
   logLevel: logLevel.WARN,
 });
 

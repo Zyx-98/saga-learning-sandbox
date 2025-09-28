@@ -1,9 +1,8 @@
 import express from "express";
 import { Kafka, logLevel } from "kafkajs";
 import { randomUUID } from "crypto";
-import { OrderCreatedEvent } from "@common/events/order.events";
-import { InventoryReservedEvent } from "@common/events/inventory.events";
-import { PaymentFailedEvent } from "@common/events/payment.events";
+import { OrderCreatedEvent } from "./common/events/order.events";
+import { PaymentFailedEvent } from "./common/events/payment.events";
 import db from "./db";
 
 const app = express();
@@ -11,7 +10,7 @@ app.use(express.json());
 
 const kafka = new Kafka({
   clientId: "order-service",
-  brokers: ["localhost:9092"],
+  brokers: ["kafka:29092"],
   logLevel: logLevel.WARN,
 });
 
@@ -28,7 +27,7 @@ app.post("/orders", async (req, res) => {
   console.log(`Received new order request. Order ID: ${orderId}`);
 
   await db.query(
-    "INSERT INTO orders (order_id, customer_id, product_id, quantity, amount, status) VALUES ($1, $2, $3, $4, $5, $6)",
+    "INSERT INTO orders (id, customer_id, product_id, quantity, amount, status) VALUES ($1, $2, $3, $4, $5, $6)",
     [orderId, customerId, productId, quantity, amount, "PENDING"]
   );
   console.log(`Order ${orderId} saved to DB with PENDING status.`);
@@ -73,7 +72,7 @@ const runConsumer = async () => {
         if (eventType === "InventoryReserved") {
           console.log(`Received InventoryReservedEvent for order ${orderId}`);
 
-          await db.query("UPDATE orders SET status = $1 WHERE order_id = $2", [
+          await db.query("UPDATE orders SET status = $1 WHERE id = $2", [
             "CONFIRMED",
             orderId,
           ]);
@@ -84,7 +83,7 @@ const runConsumer = async () => {
           console.log(`🎉 Saga finished successfully for order ${orderId}!`);
         } else if (eventType === "InventoryOutOfStock") {
           console.log(`Received PaymentFailedEvent for order ${orderId}`);
-          await db.query("UPDATE orders SET status = $1 WHERE order_id = $2", [
+          await db.query("UPDATE orders SET status = $1 WHERE id = $2", [
             "FAILED",
             orderId,
           ]);
@@ -100,7 +99,7 @@ const runConsumer = async () => {
           const { orderId } = paymentFailedEvent;
 
           console.log(`Received PaymentFailedEvent for order ${orderId}`);
-          await db.query("UPDATE orders SET status = $1 WHERE order_id = $2", [
+          await db.query("UPDATE orders SET status = $1 WHERE id = $2", [
             "FAILED",
             orderId,
           ]);
