@@ -119,7 +119,7 @@ curl -X POST http://localhost:3000/orders -H "Content-Type: application/json" -d
 
 ### Consumer Lag Scenario
 
-See the file `load-generator/README.md` for instructions on how to simulate high traffic, monitor, and resolve consumer lag.
+See the file [scenarios/consumer-lag/README.md](./scenarios/consumer-lag/README.md) for instructions on how to simulate high traffic, monitor, and resolve consumer lag.
 
 ---
 

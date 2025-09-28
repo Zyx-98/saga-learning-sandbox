@@ -59,10 +59,15 @@ const run = async () => {
           const { orderId } = paymentEvent;
 
           const orderDetails = orderDataCache.get(orderId);
+
           if (!orderDetails) {
             throw new Error(
               `No order details found for order ${orderId}. Cannot reserve inventory.`
             );
+          }
+
+          if (orderDetails?.customerId === "cust_burst_test") {
+            await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate slow processing
           }
 
           const { productId, quantity } = orderDetails.items[0];
