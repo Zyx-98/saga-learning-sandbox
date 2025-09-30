@@ -1,5 +1,5 @@
 #!/bin/bash
-for i in {1..20}
+for i in {1..50}
 do
    echo "Sending order $i"
    curl -X POST http://localhost:3000/orders \
