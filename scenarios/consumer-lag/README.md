@@ -63,31 +63,40 @@ Follow these steps to create, monitor, and resolve consumer lag.
 
 3. **Check the Lag:** While the `inventory-service` is slowly processing, check its consumer group's lag. You'll need to run this command from inside the Kafka container.
 
-    ```sh
-    # Open a new terminal and run:
-    docker exec -it kafka /bin/bash
+   - **Open Grafana:** In your web browser, navigate to your Grafana dashboard, which is likely at `http://localhost:3001`.
 
-    # Then, inside the container, run:
-    kafka-consumer-groups --bootstrap-server localhost:9092 --describe --group inventory-service-group
-    ```
-
-    Look at the output. You will see a high number in the **`LAG`** column, indicating the consumer is falling behind.
+   - **Observe the Lag:** Find your **"Consumer Lag by Group"** panel. You will see a line on the graph representing the `inventory-service-group`. Watch as this line steadily climbs, providing a clear visual confirmation that the consumer is falling behind and its lag is increasing.
 
 ### Step C: Resolve the Lag by Scaling
 
-1. **Scale Up Consumers:** The solution to lag is to add more consumers to the group to process messages in parallel. In your Docker terminal, run:
+1. **Scale Up Consumers:** The solution to processing a backlog is to add more consumers to the group. In your terminal where Docker is running, execute:
 
     ```sh
     # This scales ONLY the inventory-service to 3 instances
-    docker-compose up --scale inventory-service=3
+    docker-compose up --scale inventory-service=3 -d
     ```
 
-    Docker Compose will start two new `inventory-service` containers. They will automatically join the same consumer group and Kafka will assign them free partitions.
+    Docker Compose will start two new `inventory-service` containers. They will automatically join the `inventory-service-group`, and Kafka will rebalance the topic partitions among the three available consumers.
 
-2. **Verify the Fix:** Run the consumer group check command again inside the Kafka container.
+2. **Verify the Fix in Grafana:** Return to your Grafana dashboard. You will now see the lag for the **`inventory-service-group`** rapidly decreasing towards zero. This visually demonstrates that the three consumers are working in parallel to clear the backlog, showcasing Kafka's powerful horizontal scaling.
 
-    ```sh
-    kafka-consumer-groups --bootstrap-server localhost:9092 --describe --group inventory-service-group
-    ```
+### Step D: Other fixes
 
-You will now see the **`LAG`** rapidly decreasing as the three consumers work together to clear the backlog. This demonstrates Kafka's powerful horizontal scaling capabilities.
+Scaling is not the only solution. Here are other fixes you can experiment with in this project:
+
+- **Optimize Consumer Code (Batching):** Instead of processing one message at a time with `eachMessage`, you can process a batch with `eachBatch`. This is far more efficient for database writes.
+
+  - **Try This:** Modify your consumer to use `eachBatch` and write a more efficient `UPDATE` query.
+        ```typescript
+        eachBatch: async ({ batch, resolveOffset, heartbeat }) => {
+            console.log(`Processing a batch of ${batch.messages.length} messages.`);
+            for (const message of batch.messages) {
+                await resolveOffset(message.offset);
+                await heartbeat();
+            }
+        }
+        ```
+
+- **Tune Consumer Configurations:** In the consumer creation logic, experiment with these settings:
+  - `max.poll.records`: Increase to fetch more messages in a single request.
+  - `fetch.min.bytes`: Increase to make the broker wait for more data before responding, reducing network round-trips.
