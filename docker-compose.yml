@@ -72,9 +72,11 @@ services:
     networks:
       - app-network
 
-  kafka:
+  kafka-1:
     image: confluentinc/cp-kafka:7.3.2
-    container_name: kafka
+    container_name: kafka-1
+    networks:
+      - app-network
     depends_on:
       - zookeeper
     ports:
@@ -83,32 +85,83 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,INTERNAL://kafka-1:29092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_MIN_INSYNC_REPLICAS: 2
       KAFKA_OPTS: "-javaagent:/usr/app/jmx_prometheus_javaagent.jar=5556:/usr/app/jmx-kafka.yml"
     volumes:
       - ./jmx-exporter/jmx_prometheus_javaagent.jar:/usr/app/jmx_prometheus_javaagent.jar
       - ./jmx-exporter/jmx-kafka.yml:/usr/app/jmx-kafka.yml
+  kafka-2:
+    image: confluentinc/cp-kafka:7.3.2
+    container_name: kafka-2
     networks:
       - app-network
+    depends_on:
+      - zookeeper
+    ports:
+      - "9093:9093"
+      - "5557:5557"
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9093,INTERNAL://kafka-2:29092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_OPTS: "-javaagent:/usr/app/jmx_prometheus_javaagent.jar=5557:/usr/app/jmx-kafka.yml"
+    volumes:
+      - ./jmx-exporter/jmx_prometheus_javaagent.jar:/usr/app/jmx_prometheus_javaagent.jar
+      - ./jmx-exporter/jmx-kafka.yml:/usr/app/jmx-kafka.yml
+  kafka-3:
+    image: confluentinc/cp-kafka:7.3.2
+    container_name: kafka-3
+    networks:
+      - app-network
+    depends_on:
+      - zookeeper
+    ports:
+      - "9094:9094"
+      - "5558:5558"
+    environment:
+      KAFKA_BROKER_ID: 3
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9094,INTERNAL://kafka-3:29092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_OPTS: "-javaagent:/usr/app/jmx_prometheus_javaagent.jar=5558:/usr/app/jmx-kafka.yml"
+    volumes:
+      - ./jmx-exporter/jmx_prometheus_javaagent.jar:/usr/app/jmx_prometheus_javaagent.jar
+      - ./jmx-exporter/jmx-kafka.yml:/usr/app/jmx-kafka.yml
+
   kafka-init:
     image: confluentinc/cp-kafka:7.3.2
     depends_on:
-      - kafka
+      - kafka-1
     networks:
       - app-network
     volumes:
-      - ./create-kafka-topics.sh:/create-kafka-topics.sh
-    entrypoint: ["/bin/bash", "/create-kafka-topics.sh"]
+      - ./create-kafka-topics.sh:/tmp/create-kafka-topics.sh
+    entrypoint: ["/bin/bash", "/tmp/create-kafka-topics.sh"]
 
   akhq:
     image: tchiotludo/akhq:latest
     container_name: akhq_ui
     depends_on:
-      - kafka
+      - kafka-1
+      - kafka-2
+      - kafka-3
     ports:
       - "8080:8080"
     environment:
@@ -117,18 +170,25 @@ services:
           connections:
             docker-kafka-cluster:
               properties:
-                bootstrap.servers: "kafka:29092"
+                # Updated to include all brokers
+                bootstrap.servers: "kafka-1:29092,kafka-2:29092,kafka-3:29092"
     networks:
       - app-network
+
   kafka-exporter:
     image: danielqsj/kafka-exporter:latest
     container_name: kafka_exporter
     depends_on:
-      - kafka
+      - kafka-1
+      - kafka-2
+      - kafka-3
     ports:
       - "9308:9308"
     command:
-      - --kafka.server=kafka:29092
+      # Updated to include all brokers
+      - --kafka.server=kafka-1:29092
+      - --kafka.server=kafka-2:29092
+      - --kafka.server=kafka-3:29092
       - --web.listen-address=:9308
     networks:
       - app-network

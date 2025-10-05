@@ -1,44 +1,26 @@
 #!/bin/bash
 
+# Wait for the first broker to be available
 echo "Waiting for Kafka to be ready..."
-sleep 5
+cub kafka-ready -b kafka-1:29092 1 20
 
+# Create topics with a replication factor of 3
 echo "Creating Kafka topic: orders"
-docker exec kafka kafka-topics \
-  --bootstrap-server kafka:29092 \
-  --create \
-  --topic orders \
-  --partitions 3 \
-  --replication-factor 1
+kafka-topics --bootstrap-server kafka-1:29092 --create --topic orders --partitions 3 --replication-factor 3
 
 echo "Creating Kafka topic: payments"
-docker exec kafka kafka-topics \
-  --bootstrap-server kafka:29092 \
-  --create \
-  --topic payments \
-  --partitions 3 \
-  --replication-factor 1
+kafka-topics --bootstrap-server kafka-1:29092 --create --topic payments --partitions 3 --replication-factor 3
 
 echo "Creating Kafka topic: inventory"
-docker exec kafka kafka-topics \
-  --bootstrap-server kafka:29092 \
-  --create \
-  --topic inventory \
-  --partitions 3 \
-  --replication-factor 1
+kafka-topics --bootstrap-server kafka-1:29092 --create --topic inventory --partitions 3 --replication-factor 3
 
-echo "Creating Kafka topic: inventory DLQ (dead-letter queue)"
-docker exec kafka kafka-topics \
-  --bootstrap-server kafka:29092 \
-  --create \
-  --topic inventory.dlq \
-  --partitions 3 \
-  --replication-factor 1
+echo "Creating Kafka topic: inventory.dlq"
+kafka-topics --bootstrap-server kafka-1:29092 --create --topic inventory.dlq --partitions 1 --replication-factor 3
 
-echo "Kafka topics created successfully."
+echo "All topics created successfully."
 
 # List all topics to verify creation
 echo "Verifying created topics..."
 docker exec kafka kafka-topics \
-  --bootstrap-server kafka:29092 \
+  --bootstrap-server kafka-1:29092 \
   --list

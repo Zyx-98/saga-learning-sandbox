@@ -9,7 +9,7 @@ import db from "./db";
 
 const kafka = new Kafka({
   clientId: "inventory-service",
-  brokers: ["kafka:29092"],
+  brokers: ["kafka-1:29092"],
   logLevel: logLevel.WARN,
 });
 

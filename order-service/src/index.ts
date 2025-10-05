@@ -10,11 +10,15 @@ app.use(express.json());
 
 const kafka = new Kafka({
   clientId: "order-service",
-  brokers: ["kafka:29092"],
+  brokers: ["kafka-1:29092"],
   logLevel: logLevel.WARN,
 });
 
-const producer = kafka.producer();
+const producer = kafka.producer({
+  allowAutoTopicCreation: false,
+  transactionTimeout: 30000,
+  idempotent: true,
+});
 const consumer = kafka.consumer({ groupId: "order-service-group" });
 
 app.post("/orders", async (req, res) => {

@@ -8,7 +8,7 @@ import { InventoryOutOfStockEvent } from "./common/events/inventory.events";
 
 const kafka = new Kafka({
   clientId: "payment-service",
-  brokers: ["kafka:29092"],
+  brokers: ["kafka-1:29092"],
   logLevel: logLevel.WARN,
 });
 
