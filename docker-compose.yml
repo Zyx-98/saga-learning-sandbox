@@ -91,7 +91,7 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
-      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_MIN_INSYNC_REPLICAS: 1
       KAFKA_OPTS: "-javaagent:/usr/app/jmx_prometheus_javaagent.jar=5556:/usr/app/jmx-kafka.yml"
     volumes:
       - ./jmx-exporter/jmx_prometheus_javaagent.jar:/usr/app/jmx_prometheus_javaagent.jar
@@ -115,7 +115,7 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
-      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_MIN_INSYNC_REPLICAS: 1
       KAFKA_OPTS: "-javaagent:/usr/app/jmx_prometheus_javaagent.jar=5557:/usr/app/jmx-kafka.yml"
     volumes:
       - ./jmx-exporter/jmx_prometheus_javaagent.jar:/usr/app/jmx_prometheus_javaagent.jar
@@ -139,7 +139,7 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
-      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_MIN_INSYNC_REPLICAS: 1
       KAFKA_OPTS: "-javaagent:/usr/app/jmx_prometheus_javaagent.jar=5558:/usr/app/jmx-kafka.yml"
     volumes:
       - ./jmx-exporter/jmx_prometheus_javaagent.jar:/usr/app/jmx_prometheus_javaagent.jar

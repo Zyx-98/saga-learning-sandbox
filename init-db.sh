@@ -30,7 +30,7 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "inventory_db" <<-E
         quantity INT NOT NULL
     );
 
-    INSERT INTO products (id, quantity) VALUES ('product-123', 100000);
+    INSERT INTO products (id, quantity) VALUES ('prod_1', 100000);
 EOSQL
 
 echo "Databases and tables created successfully."
