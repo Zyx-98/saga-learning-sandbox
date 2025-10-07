@@ -24,6 +24,8 @@ echo "All topics created successfully."
 
 # List all topics to verify creation
 echo "Verifying created topics..."
-docker exec kafka kafka-topics \
-  --bootstrap-server kafka-1:29092 \
-  --list
+kafka-topics --bootstrap-server kafka-1:29092,kafka-2:29092,kafka-3:29092 --list
+
+# Describe topics to verify ISR
+echo "Describing topics to verify in-sync replicas..."
+kafka-topics --bootstrap-server kafka-1:29092,kafka-2:29092,kafka-3:29092 --describe
