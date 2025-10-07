@@ -17,6 +17,9 @@ kafka-topics --bootstrap-server kafka-1:29092 --create --topic inventory --parti
 echo "Creating Kafka topic: inventory.dlq"
 kafka-topics --bootstrap-server kafka-1:29092 --create --topic inventory.dlq --partitions 1 --replication-factor 3
 
+echo "Creating Kafka topic: orders.dlq"
+kafka-topics --bootstrap-server kafka-1:29092 --create --topic orders.dlq --partitions 1 --replication-factor 3
+
 echo "All topics created successfully."
 
 # List all topics to verify creation
