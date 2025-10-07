@@ -455,7 +455,6 @@ docker exec kafka-1 kafka-topics \
 ### ✅ Completed
 
 - [x] Core Kafka setup (3 brokers + Zookeeper)
-- [x] Event-driven microservices
 - [x] Saga pattern implementation
 - [x] 6 production troubleshooting scenarios
 - [x] Grafana + Prometheus monitoring
@@ -472,7 +471,6 @@ docker exec kafka-1 kafka-topics \
 
 ### 📋 Planned
 
-- [ ] Multi-region setup
 - [ ] Performance benchmarking
 - [ ] Security (SSL/SASL)
 - [ ] Kubernetes deployment
